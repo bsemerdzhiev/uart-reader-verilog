@@ -8,7 +8,7 @@ module baud_tick_generator  import uart_package::*;
 );
 
   // used for the counter
-  logic [BITS_FOR_COUNTER-1:0] counter_q;
+  logic [COUNTER_BITS-1:0] counter_q;
   /*
   *   _______ _____ _____ _  __      _____ ______ _   _ 
   *  |__   __|_   _/ ____| |/ /     / ____|  ____| \ | |

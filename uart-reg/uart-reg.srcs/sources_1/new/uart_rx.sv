@@ -1,6 +1,4 @@
-module uart_rx import uart_package::*; #(
-  parameter integer WORD_LENGTH    = 8,
-  parameter integer BITS_FOR_INDEX = $clog2(WORD_LENGTH)
+module uart_rx import uart_package::*; import uart_helper::*;#(
 )(
   input  logic                         clk_i,
   input  logic                         rst_n,
@@ -13,30 +11,21 @@ module uart_rx import uart_package::*; #(
 
   // output for the registers
   output logic                         valid_o,
-  output logic [WORD_LENGTH-1 : 0]     word_o
+  output logic [MSG_LENGTH-1 : 0]      word_o
 );
 
-typedef enum logic [2:0] {
-  IDLE,
-  START,
-  DATA,
-  STOP
-} uart_rx_state_e;
-
 // current state in the FSM
-uart_rx_state_e state;
-
-logic [BITS_FOR_COUNTER-1 : 0]   sample_count;
-logic [BITS_FOR_INDEX  -1 : 0]   word_index;
+state_rx_e     fsm_state;
+uart_indexer_e msg_indexer;
 
 always_ff@(posedge clk_i) begin  
   if (!rst_n) begin
-    state        <= IDLE;
-    valid_o      <= 'b0;
-    sample_count <= 'b0;
-    word_index   <= 'b0;
+    fsm_state                            <= IDLE;
+    valid_o                              <= 'b0;
+    msg_indexer.sample_count             <= 'b0;
+    msg_indexer.word_index               <= 'b0;
   end else begin
-    case (state)  
+    case (fsm_state)  
       // we are currently in IDLE
       /*
       *     _____ _____  _      ______ 
@@ -49,8 +38,8 @@ always_ff@(posedge clk_i) begin
       IDLE: begin
         valid_o  <= 'b0;
         if (rx_i == 'b0) begin
-          sample_count <=  0;
-          state        <=  START;
+          msg_indexer.sample_count       <= 0;
+          fsm_state                      <= START;
         end
       end
       /*
@@ -62,11 +51,11 @@ always_ff@(posedge clk_i) begin
       *   |_____/   |_/_/    \_\_|  \_\ |_|   
       */
       START: begin
-        sample_count   <=  sample_count + tick_i;
-        if (sample_count == HALF_SAMPLE) begin
-          word_index   <= 'b0;
-          state        <=  (rx_i == 0) ? DATA : IDLE;
-          sample_count <=  0;
+        msg_indexer.sample_count         <=  sample_count + tick_i;
+        if (msg_indexer.sample_count == HALF_SAMPLE) begin
+          msg_indexer.word_index         <= 'b0;
+          fsm_state                      <=  (rx_i == 0) ? DATA : IDLE;
+          msg_indexer.sample_count       <= 0;
         end 
       end
       /*
@@ -78,17 +67,17 @@ always_ff@(posedge clk_i) begin
       *  |_____/_/    \_\_/_/    \_\
       */
       DATA: begin
-        sample_count         <= sample_count + tick_i;
+        msg_indexer.sample_count         <= sample_count + tick_i;
         
-        if (sample_count == HALF_SAMPLE) begin
+        if (msg_indexer.sample_count == HALF_SAMPLE) begin
           // safe to read the current bit
-          word_o[word_index] <= rx_i;
-          word_index         <= (word_index == WORD_LENGTH - 1)? 0 : word_index + 'b1;
-        end else if (sample_count == OVERSAMPLE - 1) begin
-          if (word_index == 'b0) begin
-            state            <= STOP;
+          word_o[msg_indexer.word_index] <= rx_i;
+          msg_indexer.word_index         <= (msg_indexer.word_index == MSG_LENGTH - 1)? 0 : msg_indexer.word_index + 'b1;
+        end else if (msg_indexer.sample_count == OVERSAMPLE - 1) begin
+          if (msg_indexer.word_index == 'b0) begin
+            fsm_state                    <= STOP;
           end
-          sample_count       <= 'b0;
+          msg_indexer.sample_count       <= 'b0;
         end
       end
       /*
@@ -100,20 +89,20 @@ always_ff@(posedge clk_i) begin
       *  |_____/   |_|  \____/|_|     
       */
       STOP: begin
-        sample_count <= sample_count + tick_i;
-        if (sample_count == HALF_SAMPLE) begin
+        msg_indexer.sample_count         <= sample_count + tick_i;
+        if (msg_indexer.sample_count == HALF_SAMPLE) begin
           /* 
           *  if rx_i is not 1, then there 
           *  was a problem with the 
           *  end of the message
           */
           if (rx_i == 'b1) begin
-            valid_o  <= 'b1;
+            valid_o                      <= 'b1;
           end
-          state      <= IDLE;
+          fsm_state                      <= IDLE;
         end
       end
-      default: state <= IDLE;
+      default: fsm_state                 <= IDLE;
     endcase
   end
 end
