@@ -1,13 +1,13 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
 // Company: 
-// Engineer: 
+// Engineer: Borislav Semerdzhiev
 // 
 // Create Date: 08/19/2026 02:54:19 PM
 // Design Name: 
 // Module Name: uart_register
 // Project Name: 
-// Target Devices: 
+// Target Devices: PYNQ Z2 7020
 // Tool Versions: 
 // Description: 
 // 

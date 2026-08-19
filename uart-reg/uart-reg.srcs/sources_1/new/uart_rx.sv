@@ -37,6 +37,7 @@ always_ff@(posedge clk_i) begin
       */
       IDLE: begin
         valid_o  <= 'b0;
+
         if (rx_i == 'b0) begin
           msg_indexer.sample_count       <= 0;
           fsm_state                      <= START;
@@ -52,6 +53,7 @@ always_ff@(posedge clk_i) begin
       */
       START: begin
         msg_indexer.sample_count         <=  sample_count + tick_i;
+
         if (msg_indexer.sample_count == HALF_SAMPLE) begin
           msg_indexer.word_index         <= 'b0;
           fsm_state                      <=  (rx_i == 0) ? DATA : IDLE;
@@ -90,6 +92,7 @@ always_ff@(posedge clk_i) begin
       */
       STOP: begin
         msg_indexer.sample_count         <= sample_count + tick_i;
+
         if (msg_indexer.sample_count == HALF_SAMPLE) begin
           /* 
           *  if rx_i is not 1, then there 
