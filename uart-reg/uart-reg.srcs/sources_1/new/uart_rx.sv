@@ -31,8 +31,10 @@ logic [BITS_FOR_INDEX  -1 : 0]   word_index;
 
 always_ff@(posedge clk_i) begin  
   if (!rst_n) begin
-    state   <= IDLE;
-    valid_o <= 'b0;
+    state        <= IDLE;
+    valid_o      <= 'b0;
+    sample_count <= 'b0;
+    word_index   <= 'b0;
   end else begin
     case (state)  
       // we are currently in IDLE
@@ -100,9 +102,10 @@ always_ff@(posedge clk_i) begin
       STOP: begin
         sample_count <= sample_count + tick_i;
         if (sample_count == HALF_SAMPLE) begin
-          /* if rx_i is not 1, then there 
-             was a problem with the 
-             end of the message
+          /* 
+          *  if rx_i is not 1, then there 
+          *  was a problem with the 
+          *  end of the message
           */
           if (rx_i == 'b1) begin
             valid_o  <= 'b1;
