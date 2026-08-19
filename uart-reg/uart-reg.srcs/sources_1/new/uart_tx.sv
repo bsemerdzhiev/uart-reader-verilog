@@ -3,6 +3,5 @@ module uart_tx import uart_package::*; (
 
   input  logic                         tick_i
 );
-
   
 endmodule
