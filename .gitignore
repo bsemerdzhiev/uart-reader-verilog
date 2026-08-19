@@ -1,0 +1,19 @@
+# Vivado generated/cache directories
+*.cache/
+*.hw/
+*.ip_user_files/
+*.runs/
+*.sim/
+*.srcs/**/imports/
+*.gen/
+
+# Vivado logs, journals, backups
+*.jou
+*.log
+*.str
+webtalk*.log
+webtalk*.jou
+vivado*.log
+vivado*.jou
+vivado_pid*.zip
+.Xil/
