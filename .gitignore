@@ -2,10 +2,10 @@
 *.cache/
 *.hw/
 *.ip_user_files/
-*.runs/
-*.sim/
-*.srcs/**/imports/
-*.gen/
+uart_reg/*.runs/
+uart-reg/*.sim/
+uart-reg/*.srcs/**/imports/
+uart-reg/*.gen/
 
 # Vivado logs, journals, backups
 *.jou
