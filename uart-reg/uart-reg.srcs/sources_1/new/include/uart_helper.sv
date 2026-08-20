@@ -1,4 +1,17 @@
 package uart_helper;
+  localparam integer CLK_FREQ         = 1_000_000;
+  localparam integer BAUD_RATE        = 9_600;
+  localparam integer OVERSAMPLE       = 16;
+
+  localparam integer TICKS_PER_SAMPLE = CLK_FREQ / (BAUD_RATE * OVERSAMPLE);
+
+  localparam integer HALF_SAMPLE      = OVERSAMPLE / 2;
+
+  localparam integer COUNTER_BITS     = $clog2(OVERSAMPLE);
+
+  localparam integer MSG_LENGTH       = 8;
+  localparam integer MSG_BITS         = $clog2(MSG_LENGTH);
+
   typedef struct packed {
     logic [COUNTER_BITS -1 : 0]   sample_count;
     logic [MSG_BITS     -1 : 0]   word_index;
@@ -9,24 +22,16 @@ package uart_helper;
     START,
     DATA,
     STOP
-  } state_rx_e;
-
-  typedef enum logic [2:0] {
-    IDLE,
-    START,
-    DATA,
-    END
-  } state_tx_e;
-
+  } state_rx_tx_e;
 
   // bits used to address into the register
-  parameter integer ADDRESS_WIDTH        = 8;
+  localparam integer ADDRESS_WIDTH        = 8;
 
   // width of the words we store
-  parameter integer REGISTER_VALUE_WIDTH = 64;
+  localparam integer REGISTER_VALUE_WIDTH = 64;
 
   // how many registers we have
-  parameter integer MEMORY_ROWS          = 1024;
+  localparam integer MEMORY_ROWS          = 1024;
 
   typedef struct packed {
     logic [ADDRESS_WIDTH       -1:0] address;

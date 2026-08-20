@@ -9,7 +9,7 @@ module protocol_logic (
   // signals for TX
   output logic    [MSG_LENGTH-1:0]     write_byte_o,
   output logic                         we_o,
-  input logic                          tx_done_i
+  input  logic                         tx_done_i
 );
   
 // this device's logic is passive - it only can respond to a message from the pc
@@ -22,7 +22,7 @@ typedef enum logic [MSG_BITS-1:0] {
   } message_type_e;
 
 typedef enum logic [4:0] {
-    IDLE,
+    OP_TYPE_IDLE,
 
     FETCH_ADDRESS,
     FETCH_VALUE,
@@ -40,7 +40,7 @@ typedef enum logic [4:0] {
 
   logic [REGISTER_VALUE_WIDTH-1:0]   counter;
 
-  message_type_e                     msg_type;
+  message_type_e                     in_msg_type;
   operation_type_e                   fsm_state;
 
   registry                           mem_registry_i(.clk_i(clk_i), 
@@ -50,33 +50,33 @@ typedef enum logic [4:0] {
 
   always_ff @(posedge clk_i) begin
     if (!rst_n) begin
-      msg_type                  <= NONE;
-      fsm_state                 <= IDLE;
+      in_msg_type                  <= NONE;
+      fsm_state                    <= OP_TYPE_IDLE;
     end else begin
       // gate by whether a byte has been read
       case (fsm_state) 
-        IDLE: begin
+        OP_TYPE_IDLE: begin
           if (valid_rx_i) begin
-            we_o                <= 'b0;
+            we_o                   <= 'b0;
             // determine message type by the read_byte
             case (read_byte_i) 
               NONE: begin
-                msg_type        <= NONE;
-                fsm_state       <= IDLE;
+                in_msg_type        <= NONE;
+                fsm_state          <= OP_TYPE_IDLE;
               end
               WRITE_REQUEST: begin
-                msg_type        <= WRITE_REQUEST;
-                fsm_state       <= FETCH_ADDRESS;
+                in_msg_type        <= WRITE_REQUEST;
+                fsm_state          <= FETCH_ADDRESS;
 
-                out_msg.msg_type<= SUCCESS_WRITE;
+                out_msg.msg_type   <= SUCCESS_WRITE;
               end
               READ_REQUEST: begin
-                msg_type        <= READ_REQUEST;
-                fsm_state       <= FETCH_ADDRESS;
+                in_msg_type        <= READ_REQUEST;
+                fsm_state          <= FETCH_ADDRESS;
 
-                out_msg.msg_type<= SUCCESS_READ;
+                out_msg.msg_type   <= SUCCESS_READ;
               end
-              default: msg_type <= NONE;
+              default: in_msg_type <= NONE;
             endcase
           end
         end
@@ -87,7 +87,7 @@ typedef enum logic [4:0] {
             counter                               <= (counter == ADDRESS_WIDTH - MSG_LENGTH) ? 'b0 : counter + MSG_LENGTH;
 
             if (counter == ADDRESS_WIDTH - MSG_LENGTH) begin
-              case (msg_type) 
+              case (in_msg_type) 
                 WRITE_REQUEST: begin
                   fsm_state <= FETCH_VALUE;
                 end
@@ -108,7 +108,7 @@ typedef enum logic [4:0] {
             counter                               <= (counter == REGISTER_VALUE_WIDTH - MSG_LENGTH) ? 'b0 : counter + MSG_LENGTH;
 
             if (counter == REGISTER_VALUE_WIDTH - MSG_LENGTH) begin
-              case (msg_type) 
+              case (in_msg_type) 
                 WRITE_REQUEST: begin
                   fsm_state              <= STORE_REGISTER;
 
@@ -148,13 +148,13 @@ typedef enum logic [4:0] {
             
             if (counter == REGISTER_VALUE_WIDTH - MSG_LENGTH) begin
               we_o         <= 'b0;
-              fsm_state    <= IDLE;
+              fsm_state    <= OP_TYPE_IDLE;
             end
           end
         end
         default: begin
           we_o             <= 'b0;
-          fsm_state        <= IDLE;
+          fsm_state        <= OP_TYPE_IDLE;
         end
       endcase
     end

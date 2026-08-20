@@ -1,4 +1,4 @@
-module uart_tx import uart_package::*; import uart_helper::*;(
+module uart_tx import uart_helper::*;(
   input  logic                         clk_i,
   input  logic                         rst_n,
 
@@ -12,8 +12,8 @@ module uart_tx import uart_package::*; import uart_helper::*;(
   output logic                         tx_done_o
 );
 
-  state_tx_e     fsm_state;
-  uart_indexer_e msg_indexer;
+  state_rx_tx_e     fsm_state;
+  uart_indexer_e    msg_indexer;
 
   always_ff @(posedge clk_i) begin
     if (!rst_n) begin
@@ -23,7 +23,7 @@ module uart_tx import uart_package::*; import uart_helper::*;(
       tx_done_o <= 'b0;
 
       msg_indexer.sample_count         <= 'b0;
-      msg_indexer.world_index          <= 'b0;
+      msg_indexer.word_index          <= 'b0;
     end else begin
       case (fsm_state)
         /*
@@ -38,7 +38,7 @@ module uart_tx import uart_package::*; import uart_helper::*;(
           tx_o                         <= 'b1;
 
           msg_indexer.sample_count     <= 'b0;
-          msg_indexer.world_index      <= 'b0;
+          msg_indexer.word_index      <= 'b0;
 
           tx_done_o                    <= 'b0;
 
@@ -63,7 +63,7 @@ module uart_tx import uart_package::*; import uart_helper::*;(
 
           if (msg_indexer.sample_count == OVERSAMPLE - 1) begin
             msg_indexer.sample_count   <= 'b0;
-            msg_indexer.world_index    <= 'b0;
+            msg_indexer.word_index    <= 'b0;
             fsm_state                  <= DATA;
           end
         end
@@ -76,14 +76,14 @@ module uart_tx import uart_package::*; import uart_helper::*;(
         *  |_____/_/    \_\_/_/    \_\
         */
         DATA: begin
-          tx_o                         <= word_i[msg_indexer.world_index];
+          tx_o                         <= word_i[msg_indexer.word_index];
           msg_indexer.sample_count     <= msg_indexer.sample_count + tick_i;
 
           if (msg_indexer.sample_count == OVERSAMPLE - 1) begin
-            msg_indexer.world_index    <= (msg_indexer.world_index == MSG_LENGTH - 1) ? 0 : msg_indexer.world_index + 'b1;
+            msg_indexer.word_index    <= (msg_indexer.word_index == MSG_LENGTH - 1) ? 0 : msg_indexer.word_index + 'b1;
             msg_indexer.sample_count   <= 'b0;
 
-            fsm_state                  <= (msg_indexer.world_index == MSG_LENGTH - 1) ? STOP : DATA;
+            fsm_state                  <= (msg_indexer.word_index == MSG_LENGTH - 1) ? STOP : DATA;
           end
         end
         /*
@@ -101,7 +101,7 @@ module uart_tx import uart_package::*; import uart_helper::*;(
 
           if (msg_indexer.sample_count == OVERSAMPLE - 1) begin
             msg_indexer.sample_count   <= 'b0;
-            msg_indexer.world_index    <= 'b0;
+            msg_indexer.word_index    <= 'b0;
 
             fsm_state                  <= IDLE;
 

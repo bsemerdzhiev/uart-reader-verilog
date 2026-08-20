@@ -1,4 +1,4 @@
-module uart_rx import uart_package::*; import uart_helper::*;#(
+module uart_rx import uart_helper::*;#(
 )(
   input  logic                         clk_i,
   input  logic                         rst_n,
@@ -15,8 +15,8 @@ module uart_rx import uart_package::*; import uart_helper::*;#(
 );
 
   // current state in the FSM
-  state_rx_e     fsm_state;
-  uart_indexer_e msg_indexer;
+  state_rx_tx_e     fsm_state;
+  uart_indexer_e    msg_indexer;
 
   always_ff@(posedge clk_i) begin  
     if (!rst_n) begin
@@ -52,7 +52,7 @@ module uart_rx import uart_package::*; import uart_helper::*;#(
         *   |_____/   |_/_/    \_\_|  \_\ |_|   
         */
         START: begin
-          msg_indexer.sample_count         <=  sample_count + tick_i;
+          msg_indexer.sample_count         <=  msg_indexer.sample_count + tick_i;
 
           if (msg_indexer.sample_count == HALF_SAMPLE) begin
             msg_indexer.word_index         <= 'b0;
@@ -69,7 +69,7 @@ module uart_rx import uart_package::*; import uart_helper::*;#(
         *  |_____/_/    \_\_/_/    \_\
         */
         DATA: begin
-          msg_indexer.sample_count         <= sample_count + tick_i;
+          msg_indexer.sample_count         <= msg_indexer.sample_count + tick_i;
           
           if (msg_indexer.sample_count == HALF_SAMPLE) begin
             // safe to read the current bit
@@ -91,7 +91,7 @@ module uart_rx import uart_package::*; import uart_helper::*;#(
         *  |_____/   |_|  \____/|_|     
         */
         STOP: begin
-          msg_indexer.sample_count         <= sample_count + tick_i;
+          msg_indexer.sample_count         <= msg_indexer.sample_count + tick_i;
 
           if (msg_indexer.sample_count == HALF_SAMPLE) begin
             /* 

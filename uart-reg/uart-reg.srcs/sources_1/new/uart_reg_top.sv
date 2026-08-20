@@ -1,4 +1,4 @@
-module uart_reg_top (
+module uart_reg_top import uart_helper::*; (
   input  logic                         clk_i,
   input  logic                         rst_n,
 

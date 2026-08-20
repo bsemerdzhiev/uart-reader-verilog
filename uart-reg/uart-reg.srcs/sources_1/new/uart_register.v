@@ -21,6 +21,13 @@
 
 
 module uart_register(
+  input wire clk_i,
+  input wire rst_n,
 
-    );
+  input wire rx_i,
+  output wire tx_o
+);
+
+  uart_reg_top uart_reg_i(.clk_i(clk_i), 
+    .rst_n(rst_n), .rx_i(rx_i), .tx_o(tx_o));
 endmodule

@@ -1,4 +1,4 @@
-module baud_tick_generator  import uart_package::*;
+module baud_tick_generator  import uart_helper::*;
 (
   input  logic                           clk_i,
   input  logic                           rst_n,

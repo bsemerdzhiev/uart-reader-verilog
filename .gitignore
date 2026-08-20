@@ -2,7 +2,7 @@
 *.cache/
 *.hw/
 *.ip_user_files/
-uart_reg/*.runs/
+uart-reg/*.runs/
 uart-reg/*.sim/
 uart-reg/*.srcs/**/imports/
 uart-reg/*.gen/
