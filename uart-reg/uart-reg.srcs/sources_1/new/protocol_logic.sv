@@ -68,13 +68,13 @@ typedef enum logic [4:0] {
                 msg_type        <= WRITE_REQUEST;
                 fsm_state       <= FETCH_ADDRESS;
 
-                out_msg.msg_type <= SUCCESS_WRITE;
+                out_msg.msg_type<= SUCCESS_WRITE;
               end
               READ_REQUEST: begin
                 msg_type        <= READ_REQUEST;
                 fsm_state       <= FETCH_ADDRESS;
 
-                out_msg.msg_type <= SUCCESS_READ;
+                out_msg.msg_type<= SUCCESS_READ;
               end
               default: msg_type <= NONE;
             endcase

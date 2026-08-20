@@ -11,7 +11,7 @@ package uart_helper;
     STOP
   } state_rx_e;
 
-  typedef enum logic[2:0] {
+  typedef enum logic [2:0] {
     IDLE,
     START,
     DATA,
@@ -20,13 +20,13 @@ package uart_helper;
 
 
   // bits used to address into the register
-  parameter ADDRESS_WIDTH = 8;
+  parameter integer ADDRESS_WIDTH        = 8;
 
   // width of the words we store
-  parameter REGISTER_VALUE_WIDTH = 64;
+  parameter integer REGISTER_VALUE_WIDTH = 64;
 
   // how many registers we have
-  parameter MEMORY_ROWS = 1024;
+  parameter integer MEMORY_ROWS          = 1024;
 
   typedef struct packed {
     logic [ADDRESS_WIDTH       -1:0] address;
