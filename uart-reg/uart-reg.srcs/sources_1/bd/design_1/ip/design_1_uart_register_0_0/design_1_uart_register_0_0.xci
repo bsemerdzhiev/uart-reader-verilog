@@ -39,7 +39,8 @@
         "clk_i": [ { "direction": "in" } ],
         "rst_n": [ { "direction": "in" } ],
         "rx_i": [ { "direction": "in" } ],
-        "tx_o": [ { "direction": "out" } ]
+        "tx_o": [ { "direction": "out" } ],
+        "led": [ { "direction": "out", "size_left": "1", "size_right": "0" } ]
       },
       "interfaces": {
         "rst_n": {
@@ -57,5 +58,5 @@
       }
     }
   },
-  "checksum": "6a320314"
+  "checksum": "07eaeac7"
 }

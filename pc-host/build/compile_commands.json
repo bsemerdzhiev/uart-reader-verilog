@@ -1,0 +1,8 @@
+[
+{
+  "directory": "/home/borislav/Documents/uart-reg/pc-host/build",
+  "command": "/usr/bin/c++ -std=gnu++20 -o CMakeFiles/main.dir/src/main.cpp.o -c /home/borislav/Documents/uart-reg/pc-host/src/main.cpp",
+  "file": "/home/borislav/Documents/uart-reg/pc-host/src/main.cpp",
+  "output": "CMakeFiles/main.dir/src/main.cpp.o"
+}
+]

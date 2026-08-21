@@ -24,7 +24,7 @@ module uart_tx import uart_helper::*;(
 
       msg_indexer.sample_count         <= 'b0;
       msg_indexer.word_index          <= 'b0;
-    end else begin
+    end else if (we_i) begin
       case (fsm_state)
         /*
         *     _____ _____  _      ______ 
@@ -38,14 +38,12 @@ module uart_tx import uart_helper::*;(
           tx_o                         <= 'b1;
 
           msg_indexer.sample_count     <= 'b0;
-          msg_indexer.word_index      <= 'b0;
+          msg_indexer.word_index       <= 'b0;
 
           tx_done_o                    <= 'b0;
 
-          if (we_i) begin
-            // we want to start transmitting
-            fsm_state <= START;
-          end
+          // we want to start transmitting
+          fsm_state <= START;
         end
         /*
         *     _____ _______       _____ _______ 
@@ -59,12 +57,15 @@ module uart_tx import uart_helper::*;(
         START: begin
           // hold tx low for OVERSAMPLE time
           tx_o                         <= 'b0;
-          msg_indexer.sample_count     <= msg_indexer.sample_count + tick_i;
 
-          if (msg_indexer.sample_count == OVERSAMPLE - 1) begin
-            msg_indexer.sample_count   <= 'b0;
-            msg_indexer.word_index    <= 'b0;
-            fsm_state                  <= DATA;
+          if (tick_i) begin
+            msg_indexer.sample_count     <= msg_indexer.sample_count + 'b1;
+
+            if (msg_indexer.sample_count == OVERSAMPLE - 1) begin
+              msg_indexer.sample_count   <= 'b0;
+              msg_indexer.word_index    <= 'b0;
+              fsm_state                  <= DATA;
+            end
           end
         end
         /*
@@ -77,13 +78,16 @@ module uart_tx import uart_helper::*;(
         */
         DATA: begin
           tx_o                         <= word_i[msg_indexer.word_index];
-          msg_indexer.sample_count     <= msg_indexer.sample_count + tick_i;
 
-          if (msg_indexer.sample_count == OVERSAMPLE - 1) begin
-            msg_indexer.word_index    <= (msg_indexer.word_index == MSG_LENGTH - 1) ? 0 : msg_indexer.word_index + 'b1;
-            msg_indexer.sample_count   <= 'b0;
+          if (tick_i) begin
+            msg_indexer.sample_count     <= msg_indexer.sample_count + 'b1;
 
-            fsm_state                  <= (msg_indexer.word_index == MSG_LENGTH - 1) ? STOP : DATA;
+            if (msg_indexer.sample_count == OVERSAMPLE - 1) begin
+              msg_indexer.word_index    <= (msg_indexer.word_index == MSG_LENGTH - 1) ? 0 : msg_indexer.word_index + 'b1;
+              msg_indexer.sample_count   <= 'b0;
+
+              fsm_state                  <= (msg_indexer.word_index == MSG_LENGTH - 1) ? STOP : DATA;
+            end
           end
         end
         /*
@@ -97,16 +101,19 @@ module uart_tx import uart_helper::*;(
         STOP: begin
           // hold tx high for OVERSAMPLE time
           tx_o                         <= 'b1;
-          msg_indexer.sample_count     <= msg_indexer.sample_count + tick_i;
 
-          if (msg_indexer.sample_count == OVERSAMPLE - 1) begin
-            msg_indexer.sample_count   <= 'b0;
-            msg_indexer.word_index    <= 'b0;
+          if (tick_i) begin
+            msg_indexer.sample_count     <= msg_indexer.sample_count + 'b1;
+            if (msg_indexer.sample_count == OVERSAMPLE - 1) begin
+              msg_indexer.sample_count   <= 'b0;
+              msg_indexer.word_index    <= 'b0;
 
-            fsm_state                  <= IDLE;
+              fsm_state                  <= IDLE;
 
-            tx_done_o                  <= 'b1;
+              tx_done_o                  <= 'b1;
+            end
           end
+          
         end
         default: begin
           fsm_state                    <= IDLE;
@@ -114,6 +121,10 @@ module uart_tx import uart_helper::*;(
           tx_done_o                    <= 'b0;
         end
       endcase
+    end else begin
+      fsm_state                    <= IDLE;
+      tx_done_o                    <= 'b0;
+      tx_o <= 'b1;
     end
   end
     

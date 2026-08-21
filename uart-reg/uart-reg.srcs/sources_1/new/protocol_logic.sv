@@ -1,4 +1,4 @@
-module protocol_logic (
+module protocol_logic import uart_helper::*;(
   input  logic                         clk_i,
   input  logic                         rst_n,
 
@@ -52,10 +52,12 @@ typedef enum logic [4:0] {
     if (!rst_n) begin
       in_msg_type                  <= NONE;
       fsm_state                    <= OP_TYPE_IDLE;
+      counter                      <= 'b0;
     end else begin
       // gate by whether a byte has been read
       case (fsm_state) 
         OP_TYPE_IDLE: begin
+          counter                  <= 'b0;
           if (valid_rx_i) begin
             we_o                   <= 'b0;
             // determine message type by the read_byte
@@ -136,7 +138,18 @@ typedef enum logic [4:0] {
           we_o             <= 'b1;
 
           if (tx_done_i) begin
-            fsm_state      <= REPORT_VALUE;
+            we_o           <= 'b0;
+            case (in_msg_type) 
+              WRITE_REQUEST: begin
+                fsm_state <= OP_TYPE_IDLE;
+              end
+              READ_REQUEST: begin
+                fsm_state <= REPORT_VALUE;
+              end
+              default: begin
+                // this shouldnt happen, so perhaps raise a flag
+              end
+            endcase
           end
         end
         REPORT_VALUE: begin

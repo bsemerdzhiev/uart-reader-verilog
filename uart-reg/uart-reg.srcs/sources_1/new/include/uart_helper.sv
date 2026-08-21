@@ -1,9 +1,11 @@
 package uart_helper;
-  localparam integer CLK_FREQ         = 1_000_000;
-  localparam integer BAUD_RATE        = 9_600;
+  localparam integer CLK_FREQ         = 100_000_000;
+  localparam integer BAUD_RATE        = 110;
   localparam integer OVERSAMPLE       = 16;
 
   localparam integer TICKS_PER_SAMPLE = CLK_FREQ / (BAUD_RATE * OVERSAMPLE);
+
+  localparam integer COUNTER_BITS_CLOCK     = $clog2(TICKS_PER_SAMPLE);
 
   localparam integer HALF_SAMPLE      = OVERSAMPLE / 2;
 

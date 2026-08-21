@@ -22,10 +22,15 @@ module uart_reg_top import uart_helper::*; (
 
   uart_rx      uart_rx_i(.clk_i(clk_i), 
     .rst_n(rst_n), .tick_i(tick_i), 
-    .rx_i(rx_i), .valid_o(valid_rx), .word_o(ready_byte));
+    .rx_i(rx_i), .valid_o(valid_rx), .word_o(read_byte));
 
   uart_tx      uart_tx_i(.clk_i(clk_i), 
     .rst_n(rst_n), .tick_i(tick_i), 
     .tx_o(tx_o), .word_i(write_byte), .we_i(we), .tx_done_o(tx_done));
+
+  protocol_logic protocol_logic_i(.clk_i(clk_i), .rst_n(rst_n), 
+    .valid_rx_i(valid_rx), .read_byte_i(read_byte), 
+    .write_byte_o(write_byte), .we_o(we), 
+    .tx_done_i(tx_done));
     
 endmodule

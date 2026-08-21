@@ -24,6 +24,8 @@ module uart_rx import uart_helper::*;#(
       valid_o                              <= 'b0;
       msg_indexer.sample_count             <= 'b0;
       msg_indexer.word_index               <= 'b0;
+
+      word_o                               <= 'b0;
     end else begin
       case (fsm_state)  
         // we are currently in IDLE
@@ -52,13 +54,20 @@ module uart_rx import uart_helper::*;#(
         *   |_____/   |_/_/    \_\_|  \_\ |_|   
         */
         START: begin
-          msg_indexer.sample_count         <=  msg_indexer.sample_count + tick_i;
+          if (tick_i) begin
+            msg_indexer.sample_count         <=  msg_indexer.sample_count + 'b1;
 
-          if (msg_indexer.sample_count == HALF_SAMPLE) begin
-            msg_indexer.word_index         <= 'b0;
-            fsm_state                      <=  (rx_i == 0) ? DATA : IDLE;
-            msg_indexer.sample_count       <= 0;
-          end 
+            if (msg_indexer.sample_count == HALF_SAMPLE) begin
+              msg_indexer.word_index         <= 'b0;
+              if (rx_i == 'b1) begin
+                fsm_state                    <= IDLE;
+                msg_indexer.sample_count     <= 0;
+              end
+            end else if (msg_indexer.sample_count == OVERSAMPLE - 1) begin
+              fsm_state                      <=  DATA;
+              msg_indexer.sample_count       <= 0;
+            end
+          end
         end
         /*
         *   _____       _______       
@@ -69,17 +78,19 @@ module uart_rx import uart_helper::*;#(
         *  |_____/_/    \_\_/_/    \_\
         */
         DATA: begin
-          msg_indexer.sample_count         <= msg_indexer.sample_count + tick_i;
-          
-          if (msg_indexer.sample_count == HALF_SAMPLE) begin
-            // safe to read the current bit
-            word_o[msg_indexer.word_index] <= rx_i;
-            msg_indexer.word_index         <= (msg_indexer.word_index == MSG_LENGTH - 1)? 0 : msg_indexer.word_index + 'b1;
-          end else if (msg_indexer.sample_count == OVERSAMPLE - 1) begin
-            if (msg_indexer.word_index == 'b0) begin
-              fsm_state                    <= STOP;
+          if (tick_i) begin
+            msg_indexer.sample_count         <= msg_indexer.sample_count + 'b1;
+
+            if (msg_indexer.sample_count == HALF_SAMPLE) begin
+              // safe to read the current bit
+              word_o[msg_indexer.word_index] <= rx_i;
+              msg_indexer.word_index         <= (msg_indexer.word_index == MSG_LENGTH - 1)? 0 : msg_indexer.word_index + 'b1;
+            end else if (msg_indexer.sample_count == OVERSAMPLE - 1) begin
+              if (msg_indexer.word_index == 'b0) begin
+                fsm_state                    <= STOP;
+              end
+              msg_indexer.sample_count       <= 'b0;
             end
-            msg_indexer.sample_count       <= 'b0;
           end
         end
         /*
@@ -91,18 +102,20 @@ module uart_rx import uart_helper::*;#(
         *  |_____/   |_|  \____/|_|     
         */
         STOP: begin
-          msg_indexer.sample_count         <= msg_indexer.sample_count + tick_i;
+          if (tick_i) begin
+            msg_indexer.sample_count         <= msg_indexer.sample_count + 'b1;
 
-          if (msg_indexer.sample_count == HALF_SAMPLE) begin
-            /* 
-            *  if rx_i is not 1, then there 
-            *  was a problem with the 
-            *  end of the message
-            */
-            if (rx_i == 'b1) begin
-              valid_o                      <= 'b1;
+            if (msg_indexer.sample_count == HALF_SAMPLE) begin
+              /* 
+              *  if rx_i is not 1, then there 
+              *  was a problem with the 
+              *  end of the message
+              */
+              if (rx_i == 'b1) begin
+                valid_o                      <= 'b1;
+              end
+              fsm_state                      <= IDLE;
             end
-            fsm_state                      <= IDLE;
           end
         end
         default: fsm_state                 <= IDLE;
